@@ -2550,14 +2550,18 @@ function F3XExport(TableOfParts)
 	-- F3X has strong security so the only way I managed to sneak in
 	-- data that wasn't serialized by their crappy serializer was through a string property on a serialized part
 	-- So you can basically store anything on their server with this method as long as it's a string
+	local oldParents = {}
 	for _,v in pairs(TableOfParts)do
 	    pcall(function()
-			if not v.Archivable then v.Archivable=true end
-			v:Clone().Parent=Container
+			oldParents[v]=v.Parent
+			v.Parent=Container
 	    end)
 	end
 	local SerializedBuildData = {Items = {{0,0,RBLXSerialize.Encode(Container),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}, Version = 3}
-    Container:Destroy()
+    for obj,oldParent in pairs(oldParents) do
+		obj.Parent=oldParent
+	end
+	Container:Destroy()
     
     SerializedBuildData=HttpService:JSONEncode(SerializedBuildData)
 
