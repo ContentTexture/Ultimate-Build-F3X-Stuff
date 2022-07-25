@@ -2556,13 +2556,6 @@ function F3XExport(TableOfParts)
 			v:Clone().Parent=Container
 	    end)
 	end
-	for _,v in pairs(Container:GetDescendants()) do
-		if pcall(function()v.Attachment0=v.Attachment0 end) then
-			if not ( (not v.Attachment0 and not v.Attachment1) or (v.Attachment0 and v.Attachment0:FindFirstAncestor(Container.Name)) or (v.Attachment1 and v.Attachment1:FindFirstAncestor(Container.Name)) ) then
-				v:Destroy()
-			end
-		end
-	end
 	local SerializedBuildData = {Items = {{0,0,RBLXSerialize.Encode(Container),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}, Version = 3}
     Container:Destroy()
     
@@ -2584,9 +2577,7 @@ function F3XExport(TableOfParts)
 	end
 end
 
--- Importing through f3x codes directly
--- Custom import arranged by Humilitating (from the help of a few sources)
--- If you're looking to export as well: https://pastebin.com/raw/NwfQ8qJL
+-- Import
 
 do
 	ExportBaseUrl = "http://www.f3xteam.com/bt/export/%s"
