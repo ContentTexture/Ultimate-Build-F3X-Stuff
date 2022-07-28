@@ -2,6 +2,7 @@
 
 local HttpService=game:GetService"HttpService"
 
+-- Simple serializer
 Serializer = {}
 
 Serializer.Classes = {
@@ -291,8 +292,10 @@ function ConnectObjectProperties(Result, Objects)
 	local newResult = {}
 	local function lookForChildren(Table)
 		for _, ChildTable in pairs(Table or Result) do
-			table.insert(newResult, ChildTable)
-			lookForChildren(ChildTable[2])
+			if typeof(ChildTable)=="table" then
+				table.insert(newResult, ChildTable)
+				lookForChildren(ChildTable[2])
+			end
 		end
 	end
 	lookForChildren()
