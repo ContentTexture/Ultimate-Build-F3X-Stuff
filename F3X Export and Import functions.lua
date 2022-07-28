@@ -161,9 +161,9 @@ end
 
 function SerializeObject(Object, SpecialPropertiesTable)
 	local Properties = GetClassProperties(Object.ClassName)
-	local ObjectId = math.random(1,999999999)
+	local ObjectId = Object:GetAttribute"SerializerId9128"or math.random(1,999999999)
 	
-	local SerializedObject = {{}, {}, {ObjectId}}
+	local SerializedObject = {{}, {}, ObjectId}
 	Object:SetAttribute("SerializerId9128", ObjectId)
 	if Properties then
 		local x=table.clone(Properties)
@@ -176,12 +176,7 @@ function SerializeObject(Object, SpecialPropertiesTable)
 			if not Success then
 				warn("Failed to serialize property '"..Property.."' for class '"..Object.ClassName.."': "..Error)
 			else
-				if typeof(actualProperty)~="Instance" then
-					table.insert(SerializedObject[1], actualProperty==nil and "" or actualProperty)
-				else
-					table.insert(SpecialPropertiesTable, {ObjectId, actualProperty})
-					table.insert(SerializedObject[1], "")
-				end
+				table.insert(SerializedObject[1], typeof(actualProperty)=="Instance" and actualProperty:GetAttribute"SerializerId9128" or (actualProperty==nil and "" or actualProperty))
 			end
 		end
 		table.insert(SerializedObject[1], GetClass(Properties[#Properties]) and Properties[#Properties] or Object.ClassName)
@@ -194,36 +189,17 @@ function SerializeObject(Object, SpecialPropertiesTable)
 	return SerializedObject
 end
 
-function FindSerializedObjectFromID(SerializedTable, ID, Exclusion)
-	for _, SerializedObj in pairs(SerializedTable) do
-		if table.find(SerializedObj[3], ID) and SerializedObj~=Exclusion then
-			return SerializedObj
-		end
-	end
-	for _, SerializedObj in pairs(SerializedTable) do
-		return FindSerializedObjectFromID(SerializedObj[2], ID)
-	end
-end
-
 function Serializer.Serialize(TableOfObjects)
 	TableOfObjects=typeof(TableOfObjects)=="table"and TableOfObjects or {TableOfObjects}
 	local Result = {}
 	
+	for _, Object in pairs(TableOfObjects) do
+		Object:SetAttribute("SerializerId9128", math.random(1,999999999))
+	end
+	
 	local SpecialPropertiesTable = {}
 	for _, Object in pairs(TableOfObjects) do
 		table.insert(Result, SerializeObject(Object, SpecialPropertiesTable))
-	end
-	
-	-- Serialize properties that link to other objects
-	
-	for _, Info in pairs(SpecialPropertiesTable) do
-		local ObjectID = Info[1]
-		local ObjProperty = Info[2]
-		local ObjectTable = FindSerializedObjectFromID(Result, ObjectID)
-		
-		if ObjProperty:GetAttribute"SerializerId9128" and ObjectTable then
-			table.insert(ObjectTable[3], ObjProperty:GetAttribute"SerializerId9128")
-		end
 	end
 	
 	-- Clear up the attributes
@@ -265,7 +241,7 @@ function DeserializeObject(ObjectTable, ResultTable, isChild)
 			end
 		end
 		
-		Object:SetAttribute("SerializerId9128", ObjectTable[3][1])
+		Object:SetAttribute("SerializerId9128", ObjectTable[3])
 		if not isChild then
 			table.insert(ResultTable, Object)
 		else
@@ -278,18 +254,9 @@ function DeserializeObject(ObjectTable, ResultTable, isChild)
 	end
 end
 
-function LookForIDMatchInObjects(Objects, ID)
-	for _, object in pairs(Objects) do
-		if object:GetAttribute"SerializerId9128"==ID then
-			return object
-		end
-		local descendantSearch = LookForIDMatchInObjects(object:GetDescendants(), ID)
-		if descendantSearch then return descendantSearch end
-	end
-end
-
 function ConnectObjectProperties(Result, Objects)
 	local newResult = {}
+	local allObjects = {}
 	local function lookForChildren(Table)
 		for _, ChildTable in pairs(Table or Result) do
 			if typeof(ChildTable)=="table" then
@@ -300,20 +267,32 @@ function ConnectObjectProperties(Result, Objects)
 	end
 	lookForChildren()
 	Result=newResult
+	for _, object in pairs(Objects) do
+		table.insert(allObjects, object)
+		for _, descendant in pairs(object:GetDescendants()) do
+			table.insert(allObjects, descendant)
+		end
+	end
 	
-	for _, SerializedObject in pairs(Result) do
-		if #SerializedObject[3]>1 then
-			local Object = LookForIDMatchInObjects(Objects, SerializedObject[3][1])
-			
-			if Object then
-				for x, ConnectionID in pairs(SerializedObject[3]) do
-					if x~=1 then
-						local PropertyObject = LookForIDMatchInObjects(Objects, ConnectionID)
-						for _, Property in pairs(GetClassProperties(Object.ClassName)) do
-							if #Property>2 and (typeof(Object[Property])=="nil" or typeof(Object[Property])=="Instance") and (Property:sub(#Property)==tostring(x-2)or not tonumber(Property:sub(#Property))) then
-								Object[Property] = PropertyObject
-							end
-						end
+	for _, Object in pairs(allObjects) do
+		local Properties = GetClassProperties(Object.ClassName)
+		local ID = Object:GetAttribute"SerializerId9128"
+		
+		table.remove(Properties, #Properties)
+		for _, PropertyName in pairs(Properties) do
+			if typeof(Object[PropertyName])=="nil" or typeof(Object[PropertyName])=="Instance" then
+				local SerializedObject
+				
+				for _, serializedObject in pairs(newResult) do
+					if serializedObject[3]==ID then
+						SerializedObject = serializedObject
+					end
+				end
+				local connectedObjectID = SerializedObject[1][_]
+				
+				for _, connectedObject in pairs(allObjects) do
+					if connectedObject:GetAttribute"SerializerId9128"==connectedObjectID then
+						Object[PropertyName]=connectedObject
 					end
 				end
 			end
