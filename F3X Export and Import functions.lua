@@ -20,7 +20,17 @@ Serializer.Classes = {
 	["l"]="SpecialMesh",
 	["m"]="Camera",
 	["n"]="Beam",
-	["o"]="Model"
+	["o"]="Model",
+	["p"]="Sound",
+	["q"]="BodyColors",
+	["r"]="Shirt",
+	["s"]="Pants",
+	["t"]="HumanoidDescription",
+	["u"]="Humanoid",
+	["v"]="VectorForce",
+	["w"]="Motor6D",
+	["x"]="Animation",
+	["y"]="CharacterMesh"
 }
 
 Serializer.SuperClassProperties = {
@@ -108,9 +118,121 @@ Serializer.SuperClassProperties = {
 			"PrimaryPart"
 		}
 	},
+	{
+		{"p"},
+		{
+			"Looped",
+			"PlaybackSpeed",
+			"RollOffMaxDistance",
+			"RollOffMinDistance",
+			"RollOffMode",
+			"SoundGroup",
+			"SoundId",
+			"TimePosition",
+			"Volume",
+			"PlayOnRemove"
+		}
+	},
+	{
+		{"q"},
+		{
+			"HeadColor3",
+			"LeftArmColor3",
+			"LeftLegColor3",
+			"RightArmColor3",
+			"RightLegColor3",
+			"TorsoColor3",
+		}
+	},
+	{
+		{"r"},
+		{
+			"Color3",
+			"ShirtTemplate",
+		}
+	},
+	{
+		{"s"},
+		{
+			"Color3",
+			"PantsTemplate",
+		}
+	},
+	{
+		{"t"},
+		{
+			"HeadColor",
+			"LeftArmColor",
+			"LeftLegColor",
+			"RightArmColor",
+			"RightLegColor",
+			"TorsoColor",
+		} -- when are humanoid descriptions ever used, lol.
+	},
+	{
+		{"u"},
+		{
+			"Jump",
+			"PlatformStand",
+			"Sit",
+			"TargetPoint",
+			"WalkToPart",
+			"WalkToPoint",
+			"AutomaticScalingEnabled",
+			"Health",
+			"HipHeight",
+			"MaxHealth",
+			"MaxSlopeAngle",
+			"WalkSpeed",
+			"AutoJumpEnabled",
+			"JumpPower",
+			"UseJumpPower"
+		}
+	},
+	{
+		{"v"},
+		{
+			"Color",
+			"Visible",
+			"Enabled",
+			"Attachment0",
+			"ApplyAtCenterOfMass",
+			"Force",
+			"RelativeTo"
+		}
+	},
+	{
+		{"w"},
+		{
+			"CurrentAngle",
+			"DesiredAngle",
+			"MaxVelocity",
+			"Part0",
+			"Part1",
+			"Enabled",
+			"C0",
+			"C1"
+		}
+	},
+	{
+		{"x"},
+		{
+			"AnimationId",
+		}
+	},
+	{
+		{"y"},
+		{
+			"BaseTextureId",
+			"BodyPart",
+			"MeshId",
+			"OverlayTextureId",
+		}
+	},
+
 	
 	{
-		{"z"},
+		{"wa"},
 		{}
 	}
 }
@@ -135,7 +257,7 @@ function GetSuperClass(Class)
 		end
 	end
 	--warn("Couldn't find superclass for classname '"..Class.."'")
-	return GetSuperClass"z"
+	return GetSuperClass"wa"
 end
 function GetClassProperties(ClassName)
 	local SuperClass = GetSuperClass(ClassName)
@@ -179,7 +301,8 @@ function SerializeObject(Object, SpecialPropertiesTable)
 				if typeof(actualProperty)=="Instance" then
 					actualProperty = actualProperty:GetAttribute"SerializerId9128"
 				end
-				table.insert(SerializedObject[1], actualProperty==nil and ""or actualProperty)
+				actualProperty=actualProperty==nil and ""or actualProperty
+				table.insert(SerializedObject[1], actualProperty)
 			end
 		end
 		table.insert(SerializedObject[1], GetClass(Properties[#Properties]) and Properties[#Properties] or Object.ClassName)
@@ -233,7 +356,10 @@ function DeserializeObject(ObjectTable, ResultTable, isChild)
 			
 			for _, Property in pairs(ObjectTable[1]) do
 				local PropertyName = Properties[_]
-				if typeof(Object[PropertyName])~="nil" and typeof(Object[PropertyName])~="Instance"then
+				local Success = pcall(function()
+					Object[PropertyName]=Object[PropertyName]
+				end)
+				if Success and typeof(Object[PropertyName])~="nil" and typeof(Object[PropertyName])~="Instance"then
 					local Success, Error = pcall(function()
 						Object[PropertyName] = Property
 					end)
