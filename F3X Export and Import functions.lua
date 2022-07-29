@@ -2569,8 +2569,6 @@ do
 		    local Data = loadstring("return "..creation_data.Items[1][3])()
     		return Serializer.Deserialize(Data)
 		end)
-		print(s, newData)
-		setclipboard(creation_data.Items[1][3])
 	    if s and typeof(newData)=="table" then
 			local Container = Instance.new'Model';
 			Container.Name = 'BTExport';
