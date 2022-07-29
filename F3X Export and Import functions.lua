@@ -134,7 +134,7 @@ function GetSuperClass(Class)
 			end
 		end
 	end
-	warn("Couldn't find superclass for classname '"..Class.."'")
+	--warn("Couldn't find superclass for classname '"..Class.."'")
 	return GetSuperClass"z"
 end
 function GetClassProperties(ClassName)
@@ -176,7 +176,10 @@ function SerializeObject(Object, SpecialPropertiesTable)
 			if not Success then
 				warn("Failed to serialize property '"..Property.."' for class '"..Object.ClassName.."': "..Error)
 			else
-				table.insert(SerializedObject[1], typeof(actualProperty)=="Instance" and actualProperty:GetAttribute"SerializerId9128" or (actualProperty==nil and "" or actualProperty))
+				if typeof(actualProperty)=="Instance" then
+					actualProperty = actualProperty:GetAttribute"SerializerId9128"
+				end
+				table.insert(SerializedObject[1], actualProperty==nil and ""or actualProperty)
 			end
 		end
 		table.insert(SerializedObject[1], GetClass(Properties[#Properties]) and Properties[#Properties] or Object.ClassName)
@@ -2566,6 +2569,8 @@ do
 		    local Data = loadstring("return "..creation_data.Items[1][3])()
     		return Serializer.Deserialize(Data)
 		end)
+		print(s, newData)
+		setclipboard(creation_data.Items[1][3])
 	    if s and typeof(newData)=="table" then
 			local Container = Instance.new'Model';
 			Container.Name = 'BTExport';
